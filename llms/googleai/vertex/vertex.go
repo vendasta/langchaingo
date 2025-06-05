@@ -375,7 +375,7 @@ DoStream:
 // convertTools converts from a list of langchaingo tools to a list of genai
 // tools.
 func convertTools(tools []llms.Tool) ([]*genai.Tool, error) {
-	genaiTools := make([]*genai.Tool, 0, len(tools))
+	functionDeclarations := make([]*genai.FunctionDeclaration, 0, len(tools))
 	for i, tool := range tools {
 		if tool.Type != "function" {
 			return nil, fmt.Errorf("tool [%d]: unsupported type %q, want 'function'", i, tool.Type)
@@ -452,12 +452,14 @@ func convertTools(tools []llms.Tool) ([]*genai.Tool, error) {
 		}
 		genaiFuncDecl.Parameters = schema
 
-		genaiTools = append(genaiTools, &genai.Tool{
-			FunctionDeclarations: []*genai.FunctionDeclaration{genaiFuncDecl},
-		})
+		functionDeclarations = append(functionDeclarations, genaiFuncDecl)
 	}
 
-	return genaiTools, nil
+	return []*genai.Tool{
+		{
+			FunctionDeclarations: functionDeclarations,
+		},
+	}, nil
 }
 
 // convertToolSchemaType converts a tool's schema type from its langchaingo
