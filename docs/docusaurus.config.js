@@ -68,7 +68,7 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
-          editUrl: "https://github.com/tmc/langchaingo/edit/main/docs/",
+          editUrl: "https://github.com/vendasta/langchaingo/edit/main/docs/",
           remarkPlugins: [
             [require("@docusaurus/remark-plugin-npm2yarn"), { sync: true }],
           ],
@@ -178,7 +178,7 @@ const config = {
               },
               {
                 label: "Go",
-                href: "https://github.com/tmc/langchaingo",
+                href: "https://github.com/vendasta/langchaingo",
               },
             ],
           },

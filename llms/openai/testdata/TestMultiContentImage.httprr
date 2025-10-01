@@ -7,7 +7,7 @@ Content-Length: 287
 Authorization: Bearer test-api-key
 Content-Type: application/json
 
-{"model":"gpt-4o","messages":[{"role":"user","content":[{"type":"image_url","image_url":{"url":"https://github.com/tmc/langchaingo/blob/main/docs/static/img/parrot-icon.png?raw=true"}},{"text":"describe this image in detail","type":"text"}]}],"max_completion_tokens":300,"temperature":0}HTTP/2.0 200 OK
+{"model":"gpt-4o","messages":[{"role":"user","content":[{"type":"image_url","image_url":{"url":"https://github.com/vendasta/langchaingo/blob/main/docs/static/img/parrot-icon.png?raw=true"}},{"text":"describe this image in detail","type":"text"}]}],"max_completion_tokens":300,"temperature":0}HTTP/2.0 200 OK
 Content-Length: 1267
 Access-Control-Expose-Headers: X-Request-ID
 Alt-Svc: h3=":443"; ma=86400

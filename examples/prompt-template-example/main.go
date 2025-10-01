@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tmc/langchaingo/prompts"
+	"github.com/vendasta/langchaingo/prompts"
 )
 
 func main() {
@@ -99,7 +99,7 @@ func main() {
 	messages, err := chatTemplate.FormatMessages(map[string]any{
 		"input_language":  "English",
 		"output_language": "French",
-		"text":           "Hello, how are you?",
+		"text":            "Hello, how are you?",
 	})
 	if err != nil {
 		log.Fatal(err)

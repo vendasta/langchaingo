@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tmc/langchaingo/callbacks"
-	"github.com/tmc/langchaingo/llms"
-	"github.com/tmc/langchaingo/llms/openai/internal/openaiclient"
+	"github.com/vendasta/langchaingo/callbacks"
+	"github.com/vendasta/langchaingo/llms"
+	"github.com/vendasta/langchaingo/llms/openai/internal/openaiclient"
 )
 
 type ChatMessage = openaiclient.ChatMessage
@@ -355,7 +355,7 @@ func (o *LLM) GenerateContent(ctx context.Context, messages []llms.MessageConten
 				"CompletionAcceptedPredictionTokens": result.Usage.CompletionTokensDetails.AcceptedPredictionTokens,
 				"CompletionRejectedPredictionTokens": result.Usage.CompletionTokensDetails.RejectedPredictionTokens,
 				// duplicate of PromptCachedTokens
-				"CachedTokens":     result.Usage.PromptTokensDetails.CachedTokens,
+				"CachedTokens": result.Usage.PromptTokensDetails.CachedTokens,
 			},
 		}
 
