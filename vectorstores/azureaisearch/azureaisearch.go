@@ -8,9 +8,10 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/vendasta/langchaingo/embeddings"
-	"github.com/vendasta/langchaingo/schema"
-	"github.com/vendasta/langchaingo/vectorstores"
+	"github.com/tmc/langchaingo/embeddings"
+	"github.com/tmc/langchaingo/httputil"
+	"github.com/tmc/langchaingo/schema"
+	"github.com/tmc/langchaingo/vectorstores"
 )
 
 // Store is a wrapper to use azure AI search rest API.
@@ -45,7 +46,7 @@ var (
 // and returns the `Store` object needed by the other accessors.
 func New(opts ...Option) (Store, error) {
 	s := Store{
-		client: http.DefaultClient,
+		client: httputil.DefaultClient,
 	}
 
 	if err := applyClientOptions(&s, opts...); err != nil {
