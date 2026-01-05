@@ -188,7 +188,23 @@ func buildGenerateContentConfig(opts *llms.CallOptions, clientOpts Options) *gen
 	_ = opts.Metadata["CachedContentName"] // Placeholder for future implementation
 
 	// Extract and set ThinkingConfig using the standard helper function
-	if thinkingConfig := llms.GetThinkingConfig(opts); thinkingConfig != nil && thinkingConfig.Mode != llms.ThinkingModeNone {
+	thinkingConfig := llms.GetThinkingConfig(opts)
+	if opts.StreamingReasoningFunc != nil && (thinkingConfig == nil || thinkingConfig.Mode == llms.ThinkingModeNone) {
+		// If streaming reasoning is requested but no thinking mode is set,
+		// default to AUTO mode and enable returning thoughts.
+		thinkingConfig = &llms.ThinkingConfig{
+			Mode:           llms.ThinkingModeAuto,
+			ReturnThinking: true,
+			StreamThinking: true,
+		}
+	}
+
+	if thinkingConfig != nil && thinkingConfig.Mode != llms.ThinkingModeNone {
+		// Ensure thoughts are returned if we have a streaming reasoning func
+		if opts.StreamingReasoningFunc != nil {
+			thinkingConfig.ReturnThinking = true
+			thinkingConfig.StreamThinking = true
+		}
 		config.ThinkingConfig = convertThinkingConfig(thinkingConfig)
 	}
 
@@ -305,7 +321,7 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 	for i, candidate := range candidates {
 		var textContent string
 		var toolCalls []llms.ToolCall
-		
+
 		// Use the response's Text() method if available (more reliable, handles thoughts correctly)
 		// For multi-candidate responses, we need to extract text per candidate
 		if response != nil && i == 0 {
@@ -519,7 +535,7 @@ func generateFromSingleMessage(
 	// Build GenerateContentConfig
 	config := buildGenerateContentConfig(opts, clientOpts)
 
-	if opts.StreamingFunc == nil {
+	if opts.StreamingFunc == nil && opts.StreamingReasoningFunc == nil {
 		// When no streaming is requested, just call GenerateContent and return
 		// the complete response with a list of candidates.
 		resp, err := client.Models.GenerateContent(ctx, model, contents, config)
@@ -570,7 +586,7 @@ func generateFromMessages(
 		config.SystemInstruction = systemInstruction
 	}
 
-	if opts.StreamingFunc == nil {
+	if opts.StreamingFunc == nil && opts.StreamingReasoningFunc == nil {
 		resp, err := client.Models.GenerateContent(ctx, model, contents, config)
 		if err != nil {
 			return nil, googleaierrors.MapError(err)
@@ -587,8 +603,8 @@ func generateFromMessages(
 }
 
 // convertAndStreamFromIterator handles streaming responses from the new SDK.
-// It iterates over the stream, calls the StreamingFunc for each chunk, and
-// accumulates the final response.
+// It iterates over the stream, calls the StreamingFunc or StreamingReasoningFunc for each chunk,
+// and accumulates the final response.
 func convertAndStreamFromIterator(
 	ctx context.Context,
 	client *genai.Client,
@@ -600,9 +616,12 @@ func convertAndStreamFromIterator(
 	// Get the streaming iterator
 	stream := client.Models.GenerateContentStream(ctx, model, contents, config)
 
-	// Track accumulated content and final response
+	// Track accumulated content and final response.
+	// We use the accumulated string approach to be robust against how the SDK
+	// chunks parts or whether it provides deltas vs full accumulation in part.Text.
 	var finalResponse *genai.GenerateContentResponse
 	var accumulatedTextLen int
+	var accumulatedThoughtLen int
 
 	// Iterate over the stream
 	for response, err := range stream {
@@ -616,21 +635,41 @@ func convertAndStreamFromIterator(
 		// Store the final response (last one contains usage metadata)
 		finalResponse = response
 
-		// Extract text from this chunk
-		// Note: response.Text() returns the full accumulated text from all parts
-		// We need to extract only the new incremental text
-		currentFullText := response.Text()
-		currentLen := len(currentFullText)
+		if len(response.Candidates) > 0 && response.Candidates[0].Content != nil {
+			// Extract text using the SDK's helper which correctly handles accumulation
+			fullText := response.Text()
 
-		// If this response has more text than we've seen, extract the delta
-		if currentLen > accumulatedTextLen {
-			newText := currentFullText[accumulatedTextLen:]
-			if len(newText) > 0 {
-				// Call the streaming function with the new chunk
-				if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
-					return nil, fmt.Errorf("streaming function error: %w", err)
+			// Extract thoughts by joining all thought parts
+			var thoughtBuilder strings.Builder
+			for _, part := range response.Candidates[0].Content.Parts {
+				if part.Thought {
+					thoughtBuilder.WriteString(part.Text)
 				}
-				accumulatedTextLen = currentLen
+			}
+			fullThought := thoughtBuilder.String()
+
+			newText := ""
+			if len(fullText) > accumulatedTextLen {
+				newText = fullText[accumulatedTextLen:]
+				accumulatedTextLen = len(fullText)
+			}
+
+			newThought := ""
+			if len(fullThought) > accumulatedThoughtLen {
+				newThought = fullThought[accumulatedThoughtLen:]
+				accumulatedThoughtLen = len(fullThought)
+			}
+
+			if len(newText) > 0 || len(newThought) > 0 {
+				if opts.StreamingReasoningFunc != nil {
+					if err := opts.StreamingReasoningFunc(ctx, []byte(newThought), []byte(newText)); err != nil {
+						return nil, fmt.Errorf("streaming reasoning function error: %w", err)
+					}
+				} else if opts.StreamingFunc != nil && len(newText) > 0 {
+					if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
+						return nil, fmt.Errorf("streaming function error: %w", err)
+					}
+				}
 			}
 		}
 	}
