@@ -1,10 +1,12 @@
-module github.com/tmc/langchaingo/examples/caching-llm-example
+module github.com/vendasta/langchaingo/examples/caching-llm-example
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require (
 	github.com/mitchellh/go-wordwrap v1.0.1
-	github.com/tmc/langchaingo v0.1.14-pre.4
+	github.com/vendasta/langchaingo v0.1.14-pre.4
 )
 
 require (
@@ -15,4 +17,4 @@ require (
 	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 )
 
-replace github.com/tmc/langchaingo => ../..
+replace github.com/vendasta/langchaingo => ../..

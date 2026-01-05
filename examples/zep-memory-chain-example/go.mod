@@ -1,10 +1,12 @@
-module github.com/tmc/langchaingo/examples/zep-memory-chain-example
+module github.com/vendasta/langchaingo/examples/zep-memory-chain-example
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require (
 	github.com/getzep/zep-go v1.0.4
-	github.com/tmc/langchaingo v0.1.14-pre.4
+	github.com/vendasta/langchaingo v0.1.14-pre.4
 )
 
 require (
@@ -37,4 +39,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/tmc/langchaingo => ../..
+replace github.com/vendasta/langchaingo => ../..

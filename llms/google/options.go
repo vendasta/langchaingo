@@ -3,7 +3,7 @@ package google
 import (
 	"os"
 
-	"github.com/tmc/langchaingo/llms"
+	"github.com/vendasta/langchaingo/llms"
 )
 
 // Options is a unified set of options for the Google AI client.

@@ -1,13 +1,13 @@
-module github.com/tmc/langchaingo/examples/chroma-vectorstore-example
+module github.com/vendasta/langchaingo/examples/chroma-vectorstore-example
 
-go 1.24
+go 1.24.4
 
 toolchain go1.24.6
 
 require (
 	github.com/amikos-tech/chroma-go v0.1.4
 	github.com/google/uuid v1.6.0
-	github.com/tmc/langchaingo v0.1.14-pre.4
+	github.com/vendasta/langchaingo v0.1.14-pre.4
 )
 
 require (
@@ -17,4 +17,4 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.8 // indirect
 )
 
-replace github.com/tmc/langchaingo => ../..
+replace github.com/vendasta/langchaingo => ../..

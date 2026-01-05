@@ -13,10 +13,10 @@ The original `vectorstores/milvus` package uses the archived `github.com/milvus-
 1. **Update imports**:
    ```go
    // Old
-   import "github.com/tmc/langchaingo/vectorstores/milvus"
+   import "github.com/vendasta/langchaingo/vectorstores/milvus"
 
    // New
-   import "github.com/tmc/langchaingo/vectorstores/milvus/v2"
+   import "github.com/vendasta/langchaingo/vectorstores/milvus/v2"
    ```
 
 2. **Update configuration** (optional - v1 configs are automatically converted):
@@ -74,10 +74,10 @@ import (
     "github.com/milvus-io/milvus/client/v2/entity"
     "github.com/milvus-io/milvus/client/v2/index"
     "github.com/milvus-io/milvus/client/v2/milvusclient"
-    "github.com/tmc/langchaingo/embeddings"
-    "github.com/tmc/langchaingo/llms/openai"
-    "github.com/tmc/langchaingo/schema"
-    "github.com/tmc/langchaingo/vectorstores/milvus/v2"
+    "github.com/vendasta/langchaingo/embeddings"
+    "github.com/vendasta/langchaingo/llms/openai"
+    "github.com/vendasta/langchaingo/schema"
+    "github.com/vendasta/langchaingo/vectorstores/milvus/v2"
 )
 
 func main() {
@@ -258,4 +258,4 @@ go test ./vectorstores/milvus/v2/...
 
 - [Migration Examples](example_migration.go) - Detailed migration examples
 - [Milvus SDK v2 Documentation](https://milvus.io/docs)
-- [LangChain Go Documentation](https://github.com/tmc/langchaingo)
+- [LangChain Go Documentation](https://github.com/vendasta/langchaingo)

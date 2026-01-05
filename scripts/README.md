@@ -41,7 +41,7 @@ git add -A
 git commit -m "Transform imports: vendasta → tmc for upstream merge"
 
 # 3. Add upstream remote (if not already added)
-git remote add upstream https://github.com/tmc/langchaingo.git || true
+git remote add upstream https://github.com/vendasta/langchaingo.git || true
 git fetch upstream
 
 # 4. Merge from upstream (conflicts will be minimal!)
@@ -100,7 +100,7 @@ Scanning repository...
 Summary:
   Files transformed: 387
   Total replacements: 774
-  Direction: github.com/tmc/langchaingo → github.com/tmc/langchaingo
+  Direction: github.com/vendasta/langchaingo → github.com/vendasta/langchaingo
 ```
 
 #### After Upstream Merge
@@ -119,7 +119,7 @@ Scanning repository...
 Summary:
   Files transformed: 387
   Total replacements: 774
-  Direction: github.com/tmc/langchaingo → github.com/tmc/langchaingo
+  Direction: github.com/vendasta/langchaingo → github.com/vendasta/langchaingo
 ```
 
 #### Dry Run
@@ -193,8 +193,8 @@ All tools are available on standard Unix/Linux/macOS systems.
 After transforming imports back to `vendasta`, examples need to use the local codebase instead of trying to download specific versions from GitHub. Without `replace` directives, you'll get errors like:
 
 ```
-module declares its path as: github.com/tmc/langchaingo
-        but was required as: github.com/tmc/langchaingo
+module declares its path as: github.com/vendasta/langchaingo
+        but was required as: github.com/vendasta/langchaingo
 ```
 
 ### Usage
@@ -210,7 +210,7 @@ For each example in `examples/*/go.mod`:
 
 1. **Adds or updates replace directive:**
    ```go
-   replace github.com/tmc/langchaingo => ../..
+   replace github.com/vendasta/langchaingo => ../..
    ```
 
 2. **Updates module paths:**
@@ -243,7 +243,7 @@ For each example in `examples/*/go.mod`:
 ✓ Updated 75 example modules
 ════════════════════════════════════════════════════════════════
 
-All examples now use: replace github.com/tmc/langchaingo => ../..
+All examples now use: replace github.com/vendasta/langchaingo => ../..
 ```
 
 ### Compatibility

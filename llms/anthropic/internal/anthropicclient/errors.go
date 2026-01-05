@@ -3,7 +3,7 @@ package anthropicclient
 import (
 	"strings"
 
-	"github.com/tmc/langchaingo/llms"
+	"github.com/vendasta/langchaingo/llms"
 )
 
 // errorMapping represents a mapping from error patterns to error codes.

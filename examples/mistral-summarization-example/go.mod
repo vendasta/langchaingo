@@ -1,8 +1,8 @@
-module github.com/tmc/langchaingo/examples/mistral-summarization-example
+module github.com/vendasta/langchaingo/examples/mistral-summarization-example
 
 go 1.24.3
 
-require github.com/tmc/langchaingo v0.1.14-pre.4
+require github.com/vendasta/langchaingo v0.1.14-pre.4
 
 require (
 	github.com/AssemblyAI/assemblyai-go-sdk v1.3.0 // indirect
@@ -53,4 +53,4 @@ require (
 	nhooyr.io/websocket v1.8.7 // indirect
 )
 
-replace github.com/tmc/langchaingo => ../..
+replace github.com/vendasta/langchaingo => ../..

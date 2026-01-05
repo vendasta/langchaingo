@@ -1,11 +1,13 @@
-module github.com/tmc/langchaingo/examples/cybertron-embedding-example
+module github.com/vendasta/langchaingo/examples/cybertron-embedding-example
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require (
 	github.com/chewxy/math32 v1.11.1
 	github.com/google/uuid v1.6.0
-	github.com/tmc/langchaingo v0.1.14-pre.4
+	github.com/vendasta/langchaingo v0.1.14-pre.4
 )
 
 require (
@@ -51,4 +53,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/tmc/langchaingo => ../..
+replace github.com/vendasta/langchaingo => ../..
