@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vendasta/langchaingo/chains"
-	"github.com/vendasta/langchaingo/llms/openai"
-	"github.com/vendasta/langchaingo/memory"
+	"github.com/tmc/langchaingo/chains"
+	"github.com/tmc/langchaingo/llms/openai"
+	"github.com/tmc/langchaingo/memory"
 )
 
 // Step 6: Advanced Chat with Chains

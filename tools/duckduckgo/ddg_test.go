@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/vendasta/langchaingo/internal/httprr"
+	"github.com/tmc/langchaingo/internal/httprr"
 )
 
 func TestDuckDuckGoTool(t *testing.T) {

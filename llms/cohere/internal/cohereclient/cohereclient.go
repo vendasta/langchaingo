@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/cohere-ai/tokenizer"
-	"github.com/vendasta/langchaingo/httputil"
+	"github.com/tmc/langchaingo/httputil"
 )
 
 var (

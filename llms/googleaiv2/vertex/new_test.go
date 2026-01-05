@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/vendasta/langchaingo/llms/googleaiv2"
+	"github.com/tmc/langchaingo/llms/googleaiv2"
 	"google.golang.org/api/option"
 )
 

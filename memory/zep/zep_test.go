@@ -6,7 +6,7 @@ import (
 
 	"github.com/getzep/zep-go"
 	zepClient "github.com/getzep/zep-go/client"
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms"
 )
 
 // MockZepClient implements a simple mock for testing

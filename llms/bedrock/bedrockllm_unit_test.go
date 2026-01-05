@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
-	"github.com/vendasta/langchaingo/llms"
-	"github.com/vendasta/langchaingo/schema"
+	"github.com/tmc/langchaingo/llms"
+	"github.com/tmc/langchaingo/schema"
 )
 
 func TestNew(t *testing.T) {

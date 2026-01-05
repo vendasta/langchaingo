@@ -9,9 +9,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/vendasta/langchaingo/internal/imageutil"
-	"github.com/vendasta/langchaingo/llms"
-	googleaierrors "github.com/vendasta/langchaingo/llms/googleaiv2/errors"
+	"github.com/tmc/langchaingo/internal/imageutil"
+	"github.com/tmc/langchaingo/llms"
+	googleaierrors "github.com/tmc/langchaingo/llms/googleaiv2/errors"
 	"google.golang.org/genai"
 )
 

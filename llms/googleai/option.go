@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"cloud.google.com/go/vertexai/genai"
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 )

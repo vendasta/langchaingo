@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/vendasta/langchaingo/callbacks"
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/callbacks"
+	"github.com/tmc/langchaingo/llms"
 	"google.golang.org/genai"
 )
 

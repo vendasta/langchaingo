@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms"
 )
 
 func TestNew(t *testing.T) {

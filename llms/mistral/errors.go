@@ -3,7 +3,7 @@ package mistral
 import (
 	"strings"
 
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms"
 )
 
 // errorMapping represents a mapping from error patterns to error codes.

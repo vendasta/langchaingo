@@ -1,6 +1,6 @@
 package openai
 
-import "github.com/vendasta/langchaingo/llms"
+import "github.com/tmc/langchaingo/llms"
 
 // WithMaxCompletionTokens sets the max_completion_tokens field for token generation.
 // This is the recommended way to limit tokens with OpenAI models.

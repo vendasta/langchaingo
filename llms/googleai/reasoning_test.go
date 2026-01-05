@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms"
 )
 
 func TestGoogleAI_SupportsReasoning(t *testing.T) {

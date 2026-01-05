@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/vendasta/langchaingo/httputil"
+	"github.com/tmc/langchaingo/httputil"
 )
 
 const _url = "https://serpapi.com/search"

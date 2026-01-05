@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/vendasta/langchaingo/llms"
+	"github.com/tmc/langchaingo/llms"
 	"google.golang.org/genai"
 )
 

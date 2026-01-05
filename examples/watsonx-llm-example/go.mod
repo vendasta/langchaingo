@@ -1,8 +1,8 @@
-module github.com/vendasta/langchaingo/examples/watsonx-llm-example
+module github.com/tmc/langchaingo/examples/watsonx-llm-example
 
 go 1.24.3
 
-require github.com/vendasta/langchaingo v0.1.14-pre.4
+require github.com/tmc/langchaingo v0.1.14-pre.4
 
 require (
 	github.com/IBM/watsonx-go v1.0.0 // indirect
@@ -11,4 +11,4 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.8 // indirect
 )
 
-replace github.com/vendasta/langchaingo => ../..
+replace github.com/tmc/langchaingo => ../..

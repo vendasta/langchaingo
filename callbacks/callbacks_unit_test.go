@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/vendasta/langchaingo/llms"
-	"github.com/vendasta/langchaingo/schema"
+	"github.com/tmc/langchaingo/llms"
+	"github.com/tmc/langchaingo/schema"
 )
 
 // Unit tests that don't require external dependencies

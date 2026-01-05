@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/vendasta/langchaingo/llms/huggingface"
+	"github.com/tmc/langchaingo/llms/huggingface"
 )
 
 func TestOptions(t *testing.T) {

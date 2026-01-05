@@ -1,11 +1,11 @@
-module github.com/vendasta/langchaingo/examples/mongovector-vectorstore-example
+module github.com/tmc/langchaingo/examples/mongovector-vectorstore-example
 
 go 1.24
 
 toolchain go1.24.6
 
 require (
-	github.com/vendasta/langchaingo v0.1.14-pre.4
+	github.com/tmc/langchaingo v0.1.14-pre.4
 	go.mongodb.org/mongo-driver/v2 v2.0.0
 )
 
@@ -24,4 +24,4 @@ require (
 	golang.org/x/text v0.28.0 // indirect
 )
 
-replace github.com/vendasta/langchaingo => ../..
+replace github.com/tmc/langchaingo => ../..
