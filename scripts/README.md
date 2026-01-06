@@ -193,7 +193,7 @@ All tools are available on standard Unix/Linux/macOS systems.
 After transforming imports back to `vendasta`, examples need to use the local codebase instead of trying to download specific versions from GitHub. Without `replace` directives, you'll get errors like:
 
 ```
-module declares its path as: github.com/tmc/langchaingo
+module declares its path as: github.com/vendasta/langchaingo
         but was required as: github.com/vendasta/langchaingo
 ```
 

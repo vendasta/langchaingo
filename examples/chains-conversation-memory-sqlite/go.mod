@@ -1,6 +1,8 @@
 module github.com/vendasta/langchaingo/examples/chains-conversation-memory-sqlite
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.28

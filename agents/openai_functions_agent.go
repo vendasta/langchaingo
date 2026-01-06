@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/vendasta/langchaingo/callbacks"
+	"github.com/vendasta/langchaingo/chains"
 	"github.com/vendasta/langchaingo/llms"
 	"github.com/vendasta/langchaingo/prompts"
 	"github.com/vendasta/langchaingo/schema"
@@ -71,6 +72,7 @@ func (o *OpenAIFunctionsAgent) Plan(
 	ctx context.Context,
 	intermediateSteps []schema.AgentStep,
 	inputs map[string]string,
+	options ...chains.ChainCallOption,
 ) ([]schema.AgentAction, *schema.AgentFinish, error) {
 	fullInputs := make(map[string]any, len(inputs))
 	for key, value := range inputs {
@@ -147,8 +149,11 @@ func (o *OpenAIFunctionsAgent) Plan(
 		mcList[i] = mc
 	}
 
-	result, err := o.LLM.GenerateContent(ctx, mcList,
-		llms.WithFunctions(o.functions()), llms.WithStreamingFunc(stream))
+	// Build LLM call options, including user-provided options
+	llmOptions := []llms.CallOption{llms.WithFunctions(o.functions()), llms.WithStreamingFunc(stream)}
+	llmOptions = append(llmOptions, chains.GetLLMCallOptions(options...)...)
+
+	result, err := o.LLM.GenerateContent(ctx, mcList, llmOptions...)
 	if err != nil {
 		return nil, nil, err
 	}

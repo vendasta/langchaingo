@@ -1,6 +1,8 @@
 module github.com/vendasta/langchaingo/examples/local-llm-example
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require github.com/vendasta/langchaingo v0.1.14-pre.4
 

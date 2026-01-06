@@ -1,6 +1,6 @@
 module github.com/vendasta/langchaingo/examples/reasoning-tokens
 
-go 1.24
+go 1.24.4
 
 toolchain go1.24.6
 

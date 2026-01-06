@@ -1,6 +1,8 @@
 module github.com/vendasta/langchaingo/examples/zep-memory-chain-example
 
-go 1.24.3
+go 1.24.4
+
+toolchain go1.24.6
 
 require (
 	github.com/getzep/zep-go v1.0.4

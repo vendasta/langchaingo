@@ -1,6 +1,6 @@
 module github.com/vendasta/langchaingo/examples/bedrock-provider-example
 
-go 1.24
+go 1.24.4
 
 toolchain go1.24.6
 
