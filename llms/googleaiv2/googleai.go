@@ -305,7 +305,7 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 	for i, candidate := range candidates {
 		var textContent string
 		var toolCalls []llms.ToolCall
-		
+
 		// Use the response's Text() method if available (more reliable, handles thoughts correctly)
 		// For multi-candidate responses, we need to extract text per candidate
 		if response != nil && i == 0 {
@@ -349,6 +349,8 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 							Name:      part.FunctionCall.Name,
 							Arguments: string(b),
 						},
+						// Preserve ThoughtSignature for Gemini 3+ models - required for tool calling
+						ThoughtSignature: part.ThoughtSignature,
 					}
 					toolCalls = append(toolCalls, toolCall)
 				}
@@ -446,7 +448,10 @@ func convertParts(parts []llms.ContentPart) ([]*genai.Part, error) {
 				Name: fc.Name,
 				Args: argsMap,
 			}
-			out = &genai.Part{FunctionCall: functionCall}
+			out = &genai.Part{
+				FunctionCall:     functionCall,
+				ThoughtSignature: p.ThoughtSignature, // Required for Gemini 3+ tool calling
+			}
 		case llms.ToolCallResponse:
 			functionResponse := &genai.FunctionResponse{
 				Name: p.Name,
