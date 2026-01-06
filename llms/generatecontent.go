@@ -102,6 +102,9 @@ type ToolCall struct {
 	Type string `json:"type"`
 	// FunctionCall is the function call to be executed.
 	FunctionCall *FunctionCall `json:"function,omitempty"`
+	// ThoughtSignature is an opaque signature for Gemini 3+ models that must be
+	// preserved when echoing back function calls. Required for tool calling to work.
+	ThoughtSignature []byte `json:"thought_signature,omitempty"`
 }
 
 func (ToolCall) isPart() {}
