@@ -215,6 +215,8 @@ func convertHarmBlockThreshold(threshold HarmBlockThreshold) genai.HarmBlockThre
 }
 
 // convertThinkingConfig converts llms.ThinkingConfig to genai.ThinkingConfig.
+// Note: Gemini 3 Pro only supports "low" and "high" thinking levels.
+// See: https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thinking_level
 func convertThinkingConfig(config *llms.ThinkingConfig) *genai.ThinkingConfig {
 	if config == nil {
 		return nil
@@ -222,26 +224,19 @@ func convertThinkingConfig(config *llms.ThinkingConfig) *genai.ThinkingConfig {
 
 	genaiConfig := &genai.ThinkingConfig{}
 
-	// Map ThinkingMode to ThinkingLevel
-	// Note: Google Gemini API only supports LOW and HIGH thinking levels.
-	// MEDIUM is not supported, so we map it to LOW as a middle ground.
-	var thinkingLevel genai.ThinkingLevel
+	// Map ThinkingMode to Gemini ThinkingLevel
+	// Gemini 3 Pro only supports LOW and HIGH levels
+	// LOW: Minimizes latency and cost, best for simple tasks
+	// HIGH: Maximizes reasoning depth, may take longer but more carefully reasoned
 	switch config.Mode {
-	case llms.ThinkingModeLow:
-		thinkingLevel = genai.ThinkingLevelLow
-	case llms.ThinkingModeMedium:
-		// Medium is not supported by Gemini API, map to LOW as a moderate option
-		// This differentiates it from HIGH and provides a middle ground
-		thinkingLevel = genai.ThinkingLevelLow
+	case llms.ThinkingModeLow, llms.ThinkingModeMedium, llms.ThinkingModeAuto:
+		// Map medium/auto to low for Gemini 3 Pro compatibility
+		genaiConfig.ThinkingLevel = genai.ThinkingLevelLow
 	case llms.ThinkingModeHigh:
-		thinkingLevel = genai.ThinkingLevelHigh
-	case llms.ThinkingModeAuto:
-		// Auto defaults to HIGH for maximum reasoning capability
-		thinkingLevel = genai.ThinkingLevelHigh
+		genaiConfig.ThinkingLevel = genai.ThinkingLevelHigh
 	default:
 		return nil // ThinkingModeNone or unknown
 	}
-	genaiConfig.ThinkingLevel = thinkingLevel
 
 	// Set thinking budget if provided
 	if config.BudgetTokens > 0 {
@@ -298,39 +293,42 @@ func convertCandidatesFromResponse(resp *genai.GenerateContentResponse) (*llms.C
 }
 
 // convertCandidates converts a sequence of genai.Candidate to a response.
-// If response is provided, its Text() method is used for more reliable text extraction.
+// It extracts both regular text content and thinking/thought content from Gemini 3 models.
 func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateContentResponseUsageMetadata, response *genai.GenerateContentResponse) (*llms.ContentResponse, error) {
 	var contentResponse llms.ContentResponse
 
 	for i, candidate := range candidates {
 		var textContent string
+		var thinkingContent string
 		var toolCalls []llms.ToolCall
 
-		// Use the response's Text() method if available (more reliable, handles thoughts correctly)
-		// For multi-candidate responses, we need to extract text per candidate
-		if response != nil && i == 0 {
-			// For the first candidate, we can use the response's Text() method
-			// which handles all the edge cases properly
-			textContent = response.Text()
-		} else {
-			// Fallback to manual extraction for additional candidates or when response is nil
-			buf := strings.Builder{}
-			if candidate.Content != nil && candidate.Content.Parts != nil {
-				for _, part := range candidate.Content.Parts {
-					if part == nil {
-						continue
-					}
-					// Skip thought parts (reasoning models mark internal thinking as thoughts)
-					// Only include actual text content, matching the SDK's Text() method behavior
-					if part.Text != "" && !part.Thought {
-						_, err := buf.WriteString(part.Text)
-						if err != nil {
-							return nil, err
-						}
+		// Extract text content and thinking content from parts
+		// We need to manually extract to separate thoughts from regular content
+		textBuf := strings.Builder{}
+		thinkingBuf := strings.Builder{}
+		if candidate.Content != nil && candidate.Content.Parts != nil {
+			for _, part := range candidate.Content.Parts {
+				if part == nil {
+					continue
+				}
+				if part.Text != "" {
+					if part.Thought {
+						// Collect thought parts (reasoning models' internal thinking)
+						thinkingBuf.WriteString(part.Text)
+					} else {
+						// Collect regular text content
+						textBuf.WriteString(part.Text)
 					}
 				}
 			}
-			textContent = buf.String()
+		}
+		textContent = textBuf.String()
+		thinkingContent = thinkingBuf.String()
+
+		// For the first candidate, we can use the response's Text() method as a fallback
+		// if we didn't extract any text content manually (handles edge cases)
+		if response != nil && i == 0 && textContent == "" {
+			textContent = response.Text()
 		}
 
 		// Extract tool calls from parts (per candidate)
@@ -394,8 +392,9 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 			}
 		}
 
-		// Google AI doesn't separate thinking content like OpenAI o1, but we provide empty standardized fields
-		metadata["ThinkingContent"] = "" // Google models don't separate thinking content
+		// Extract thinking content from Gemini 3 models (stored in thinkingContent variable above)
+		// This provides cross-provider compatibility with OpenAI o1, Anthropic Claude, etc.
+		metadata["ThinkingContent"] = thinkingContent
 
 		// Note: Google AI's CachedContent requires pre-created cached content via API,
 		// not inline cache control like Anthropic. Use Client.CreateCachedContent() for caching.
@@ -404,10 +403,11 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 
 		contentResponse.Choices = append(contentResponse.Choices,
 			&llms.ContentChoice{
-				Content:        textContent,
-				StopReason:     finishReason,
-				GenerationInfo: metadata,
-				ToolCalls:      toolCalls,
+				Content:          textContent,
+				ReasoningContent: thinkingContent, // Gemini 3 native thinking content
+				StopReason:       finishReason,
+				GenerationInfo:   metadata,
+				ToolCalls:        toolCalls,
 			})
 	}
 	return &contentResponse, nil
@@ -575,7 +575,8 @@ func generateFromMessages(
 		config.SystemInstruction = systemInstruction
 	}
 
-	if opts.StreamingFunc == nil {
+	// Use streaming if either StreamingFunc or StreamingReasoningFunc is set
+	if opts.StreamingFunc == nil && opts.StreamingReasoningFunc == nil {
 		resp, err := client.Models.GenerateContent(ctx, model, contents, config)
 		if err != nil {
 			return nil, googleaierrors.MapError(err)
@@ -592,8 +593,8 @@ func generateFromMessages(
 }
 
 // convertAndStreamFromIterator handles streaming responses from the new SDK.
-// It iterates over the stream, calls the StreamingFunc for each chunk, and
-// accumulates the final response.
+// It iterates over the stream, calls the StreamingFunc for each text chunk and
+// StreamingReasoningFunc for each thought chunk, and accumulates the final response.
 func convertAndStreamFromIterator(
 	ctx context.Context,
 	client *genai.Client,
@@ -608,6 +609,11 @@ func convertAndStreamFromIterator(
 	// Track accumulated content and final response
 	var finalResponse *genai.GenerateContentResponse
 	var accumulatedTextLen int
+	// Track which thought parts we've already emitted (by their text hash/content)
+	// to avoid re-emitting the same thought when the API returns accumulated parts
+	emittedThoughts := make(map[string]bool)
+	// Accumulate all thoughts for the final response (in order of emission)
+	var accumulatedThoughts strings.Builder
 
 	// Iterate over the stream
 	for response, err := range stream {
@@ -621,8 +627,35 @@ func convertAndStreamFromIterator(
 		// Store the final response (last one contains usage metadata)
 		finalResponse = response
 
-		// Extract text from this chunk
-		// Note: response.Text() returns the full accumulated text from all parts
+		// Process thought content - emit via StreamingReasoningFunc and accumulate for final response
+		// Each thought part is emitted directly (not as a delta) to preserve complete thoughts
+		if len(response.Candidates) > 0 {
+			candidate := response.Candidates[0]
+			if candidate.Content != nil {
+				for _, part := range candidate.Content.Parts {
+					if part != nil && part.Thought && part.Text != "" {
+						// Only process thoughts we haven't seen before
+						if !emittedThoughts[part.Text] {
+							emittedThoughts[part.Text] = true
+							// Accumulate for final response
+							if accumulatedThoughts.Len() > 0 {
+								accumulatedThoughts.WriteString("\n\n")
+							}
+							accumulatedThoughts.WriteString(part.Text)
+							// Emit via streaming callback if provided
+							if opts.StreamingReasoningFunc != nil {
+								if err := opts.StreamingReasoningFunc(ctx, []byte(part.Text), nil); err != nil {
+									fmt.Printf("streaming reasoning function error (continuing): %v\n", err)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Extract text from this chunk (non-thought content)
+		// Note: response.Text() returns the full accumulated text from all non-thought parts
 		// We need to extract only the new incremental text
 		currentFullText := response.Text()
 		currentLen := len(currentFullText)
@@ -632,8 +665,10 @@ func convertAndStreamFromIterator(
 			newText := currentFullText[accumulatedTextLen:]
 			if len(newText) > 0 {
 				// Call the streaming function with the new chunk
-				if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
-					return nil, fmt.Errorf("streaming function error: %w", err)
+				if opts.StreamingFunc != nil {
+					if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
+						return nil, fmt.Errorf("streaming function error: %w", err)
+					}
 				}
 				accumulatedTextLen = currentLen
 			}
@@ -645,7 +680,18 @@ func convertAndStreamFromIterator(
 		return nil, ErrNoContentInResponse
 	}
 
-	return convertCandidatesFromResponse(finalResponse)
+	resp, err := convertCandidatesFromResponse(finalResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	// Override the ReasoningContent with our accumulated thoughts from streaming
+	// This ensures all streamed thoughts are captured in the final response
+	if len(resp.Choices) > 0 && accumulatedThoughts.Len() > 0 {
+		resp.Choices[0].ReasoningContent = accumulatedThoughts.String()
+	}
+
+	return resp, nil
 }
 
 // convertSchemaRecursive recursively converts a schema map to a genai.Schema
