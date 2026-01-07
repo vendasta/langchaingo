@@ -352,6 +352,28 @@ func TestConvertCandidates(t *testing.T) { //nolint:funlen // comprehensive test
 			wantErr:     false,
 			wantChoices: 1,
 		},
+		{
+			name: "candidate with thinking content (Gemini 3)",
+			candidates: []*genai.Candidate{
+				{
+					Content: &genai.Content{
+						Parts: []*genai.Part{
+							{Text: "Let me think about this...", Thought: true},
+							{Text: "The answer is 42."},
+						},
+					},
+					FinishReason: finishReasonStop,
+				},
+			},
+			usage: &genai.GenerateContentResponseUsageMetadata{
+				PromptTokenCount:     20,
+				CandidatesTokenCount: 15,
+				TotalTokenCount:      35,
+				ThoughtsTokenCount:   8,
+			},
+			wantErr:     false,
+			wantChoices: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -375,9 +397,21 @@ func TestConvertCandidates(t *testing.T) { //nolint:funlen // comprehensive test
 			if tt.usage != nil && len(result.Choices) > 0 {
 				metadata := result.Choices[0].GenerationInfo
 				// Token counts are stored as int in the new implementation
-				assert.Equal(t, 10, metadata["input_tokens"])
-				assert.Equal(t, 5, metadata["output_tokens"])
-				assert.Equal(t, 15, metadata["total_tokens"])
+				assert.Equal(t, int(tt.usage.PromptTokenCount), metadata["input_tokens"])
+				assert.Equal(t, int(tt.usage.CandidatesTokenCount), metadata["output_tokens"])
+				assert.Equal(t, int(tt.usage.TotalTokenCount), metadata["total_tokens"])
+			}
+
+			// Check thinking content for Gemini 3 models
+			if tt.name == "candidate with thinking content (Gemini 3)" && len(result.Choices) > 0 {
+				choice := result.Choices[0]
+				// Verify thinking content is correctly extracted
+				assert.Equal(t, "The answer is 42.", choice.Content, "Regular content should not include thought parts")
+				assert.Equal(t, "Let me think about this...", choice.ReasoningContent, "Thinking content should be extracted from thought parts")
+				// Verify metadata contains thinking content
+				metadata := choice.GenerationInfo
+				assert.Equal(t, "Let me think about this...", metadata["ThinkingContent"], "ThinkingContent metadata should match")
+				assert.Equal(t, 8, metadata["ThinkingTokens"], "ThinkingTokens should be correctly extracted")
 			}
 
 			// Citations and safety are only added if they exist (not nil)

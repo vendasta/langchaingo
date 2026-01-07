@@ -298,39 +298,42 @@ func convertCandidatesFromResponse(resp *genai.GenerateContentResponse) (*llms.C
 }
 
 // convertCandidates converts a sequence of genai.Candidate to a response.
-// If response is provided, its Text() method is used for more reliable text extraction.
+// It extracts both regular text content and thinking/thought content from Gemini 3 models.
 func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateContentResponseUsageMetadata, response *genai.GenerateContentResponse) (*llms.ContentResponse, error) {
 	var contentResponse llms.ContentResponse
 
 	for i, candidate := range candidates {
 		var textContent string
+		var thinkingContent string
 		var toolCalls []llms.ToolCall
 
-		// Use the response's Text() method if available (more reliable, handles thoughts correctly)
-		// For multi-candidate responses, we need to extract text per candidate
-		if response != nil && i == 0 {
-			// For the first candidate, we can use the response's Text() method
-			// which handles all the edge cases properly
-			textContent = response.Text()
-		} else {
-			// Fallback to manual extraction for additional candidates or when response is nil
-			buf := strings.Builder{}
-			if candidate.Content != nil && candidate.Content.Parts != nil {
-				for _, part := range candidate.Content.Parts {
-					if part == nil {
-						continue
-					}
-					// Skip thought parts (reasoning models mark internal thinking as thoughts)
-					// Only include actual text content, matching the SDK's Text() method behavior
-					if part.Text != "" && !part.Thought {
-						_, err := buf.WriteString(part.Text)
-						if err != nil {
-							return nil, err
-						}
+		// Extract text content and thinking content from parts
+		// We need to manually extract to separate thoughts from regular content
+		textBuf := strings.Builder{}
+		thinkingBuf := strings.Builder{}
+		if candidate.Content != nil && candidate.Content.Parts != nil {
+			for _, part := range candidate.Content.Parts {
+				if part == nil {
+					continue
+				}
+				if part.Text != "" {
+					if part.Thought {
+						// Collect thought parts (reasoning models' internal thinking)
+						thinkingBuf.WriteString(part.Text)
+					} else {
+						// Collect regular text content
+						textBuf.WriteString(part.Text)
 					}
 				}
 			}
-			textContent = buf.String()
+		}
+		textContent = textBuf.String()
+		thinkingContent = thinkingBuf.String()
+
+		// For the first candidate, we can use the response's Text() method as a fallback
+		// if we didn't extract any text content manually (handles edge cases)
+		if response != nil && i == 0 && textContent == "" {
+			textContent = response.Text()
 		}
 
 		// Extract tool calls from parts (per candidate)
@@ -394,8 +397,9 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 			}
 		}
 
-		// Google AI doesn't separate thinking content like OpenAI o1, but we provide empty standardized fields
-		metadata["ThinkingContent"] = "" // Google models don't separate thinking content
+		// Extract thinking content from Gemini 3 models (stored in thinkingContent variable above)
+		// This provides cross-provider compatibility with OpenAI o1, Anthropic Claude, etc.
+		metadata["ThinkingContent"] = thinkingContent
 
 		// Note: Google AI's CachedContent requires pre-created cached content via API,
 		// not inline cache control like Anthropic. Use Client.CreateCachedContent() for caching.
@@ -404,10 +408,11 @@ func convertCandidates(candidates []*genai.Candidate, usage *genai.GenerateConte
 
 		contentResponse.Choices = append(contentResponse.Choices,
 			&llms.ContentChoice{
-				Content:        textContent,
-				StopReason:     finishReason,
-				GenerationInfo: metadata,
-				ToolCalls:      toolCalls,
+				Content:          textContent,
+				ReasoningContent: thinkingContent, // Gemini 3 native thinking content
+				StopReason:       finishReason,
+				GenerationInfo:   metadata,
+				ToolCalls:        toolCalls,
 			})
 	}
 	return &contentResponse, nil
