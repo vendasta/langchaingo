@@ -605,9 +605,8 @@ func convertAndStreamFromIterator(
 	// Get the streaming iterator
 	stream := client.Models.GenerateContentStream(ctx, model, contents, config)
 
-	// Track accumulated content and final response
+	// Track final response for usage metadata
 	var finalResponse *genai.GenerateContentResponse
-	var accumulatedTextLen int
 
 	// Iterate over the stream
 	for response, err := range stream {
@@ -621,21 +620,13 @@ func convertAndStreamFromIterator(
 		// Store the final response (last one contains usage metadata)
 		finalResponse = response
 
-		// Extract text from this chunk
-		// Note: response.Text() returns the full accumulated text from all parts
-		// We need to extract only the new incremental text
-		currentFullText := response.Text()
-		currentLen := len(currentFullText)
-
-		// If this response has more text than we've seen, extract the delta
-		if currentLen > accumulatedTextLen {
-			newText := currentFullText[accumulatedTextLen:]
-			if len(newText) > 0 {
-				// Call the streaming function with the new chunk
-				if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
-					return nil, fmt.Errorf("streaming function error: %w", err)
-				}
-				accumulatedTextLen = currentLen
+		// Extract text from this chunk and emit it directly.
+		// Each streaming response contains only the NEW incremental text,
+		// not the full accumulated text - so we emit it as-is without delta extraction.
+		chunkText := response.Text()
+		if len(chunkText) > 0 {
+			if err := opts.StreamingFunc(ctx, []byte(chunkText)); err != nil {
+				return nil, fmt.Errorf("streaming function error: %w", err)
 			}
 		}
 	}
