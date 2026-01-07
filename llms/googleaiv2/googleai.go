@@ -222,26 +222,19 @@ func convertThinkingConfig(config *llms.ThinkingConfig) *genai.ThinkingConfig {
 
 	genaiConfig := &genai.ThinkingConfig{}
 
-	// Map ThinkingMode to ThinkingLevel
-	// Note: Google Gemini API only supports LOW and HIGH thinking levels.
-	// MEDIUM is not supported, so we map it to LOW as a middle ground.
-	var thinkingLevel genai.ThinkingLevel
+	// Only set ThinkingLevel for HIGH mode - for other modes, we just enable IncludeThoughts
+	// Setting ThinkingLevel forces extended thinking which can cause the model to only produce
+	// thinking content without actual output. By only setting IncludeThoughts, we get the
+	// thinking without forcing extended thinking behavior.
 	switch config.Mode {
-	case llms.ThinkingModeLow:
-		thinkingLevel = genai.ThinkingLevelLow
-	case llms.ThinkingModeMedium:
-		// Medium is not supported by Gemini API, map to LOW as a moderate option
-		// This differentiates it from HIGH and provides a middle ground
-		thinkingLevel = genai.ThinkingLevelLow
 	case llms.ThinkingModeHigh:
-		thinkingLevel = genai.ThinkingLevelHigh
-	case llms.ThinkingModeAuto:
-		// Auto defaults to HIGH for maximum reasoning capability
-		thinkingLevel = genai.ThinkingLevelHigh
+		genaiConfig.ThinkingLevel = genai.ThinkingLevelHigh
+	case llms.ThinkingModeLow, llms.ThinkingModeMedium, llms.ThinkingModeAuto:
+		// Don't set ThinkingLevel - just enable IncludeThoughts
+		// This allows the model to think naturally without forcing extended thinking
 	default:
 		return nil // ThinkingModeNone or unknown
 	}
-	genaiConfig.ThinkingLevel = thinkingLevel
 
 	// Set thinking budget if provided
 	if config.BudgetTokens > 0 {
@@ -580,7 +573,8 @@ func generateFromMessages(
 		config.SystemInstruction = systemInstruction
 	}
 
-	if opts.StreamingFunc == nil {
+	// Use streaming if either StreamingFunc or StreamingReasoningFunc is set
+	if opts.StreamingFunc == nil && opts.StreamingReasoningFunc == nil {
 		resp, err := client.Models.GenerateContent(ctx, model, contents, config)
 		if err != nil {
 			return nil, googleaierrors.MapError(err)
@@ -597,8 +591,8 @@ func generateFromMessages(
 }
 
 // convertAndStreamFromIterator handles streaming responses from the new SDK.
-// It iterates over the stream, calls the StreamingFunc for each chunk, and
-// accumulates the final response.
+// It iterates over the stream, calls the StreamingFunc for each text chunk and
+// StreamingReasoningFunc for each thought chunk, and accumulates the final response.
 func convertAndStreamFromIterator(
 	ctx context.Context,
 	client *genai.Client,
@@ -613,6 +607,11 @@ func convertAndStreamFromIterator(
 	// Track accumulated content and final response
 	var finalResponse *genai.GenerateContentResponse
 	var accumulatedTextLen int
+	// Track which thought parts we've already emitted (by their text hash/content)
+	// to avoid re-emitting the same thought when the API returns accumulated parts
+	emittedThoughts := make(map[string]bool)
+	// Accumulate all thoughts for the final response (in order of emission)
+	var accumulatedThoughts strings.Builder
 
 	// Iterate over the stream
 	for response, err := range stream {
@@ -626,8 +625,35 @@ func convertAndStreamFromIterator(
 		// Store the final response (last one contains usage metadata)
 		finalResponse = response
 
-		// Extract text from this chunk
-		// Note: response.Text() returns the full accumulated text from all parts
+		// Process thought content - emit via StreamingReasoningFunc and accumulate for final response
+		// Each thought part is emitted directly (not as a delta) to preserve complete thoughts
+		if len(response.Candidates) > 0 {
+			candidate := response.Candidates[0]
+			if candidate.Content != nil {
+				for _, part := range candidate.Content.Parts {
+					if part != nil && part.Thought && part.Text != "" {
+						// Only process thoughts we haven't seen before
+						if !emittedThoughts[part.Text] {
+							emittedThoughts[part.Text] = true
+							// Accumulate for final response
+							if accumulatedThoughts.Len() > 0 {
+								accumulatedThoughts.WriteString("\n\n")
+							}
+							accumulatedThoughts.WriteString(part.Text)
+							// Emit via streaming callback if provided
+							if opts.StreamingReasoningFunc != nil {
+								if err := opts.StreamingReasoningFunc(ctx, []byte(part.Text), nil); err != nil {
+									fmt.Printf("streaming reasoning function error (continuing): %v\n", err)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Extract text from this chunk (non-thought content)
+		// Note: response.Text() returns the full accumulated text from all non-thought parts
 		// We need to extract only the new incremental text
 		currentFullText := response.Text()
 		currentLen := len(currentFullText)
@@ -637,8 +663,10 @@ func convertAndStreamFromIterator(
 			newText := currentFullText[accumulatedTextLen:]
 			if len(newText) > 0 {
 				// Call the streaming function with the new chunk
-				if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
-					return nil, fmt.Errorf("streaming function error: %w", err)
+				if opts.StreamingFunc != nil {
+					if err := opts.StreamingFunc(ctx, []byte(newText)); err != nil {
+						return nil, fmt.Errorf("streaming function error: %w", err)
+					}
 				}
 				accumulatedTextLen = currentLen
 			}
@@ -650,7 +678,18 @@ func convertAndStreamFromIterator(
 		return nil, ErrNoContentInResponse
 	}
 
-	return convertCandidatesFromResponse(finalResponse)
+	resp, err := convertCandidatesFromResponse(finalResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	// Override the ReasoningContent with our accumulated thoughts from streaming
+	// This ensures all streamed thoughts are captured in the final response
+	if len(resp.Choices) > 0 && accumulatedThoughts.Len() > 0 {
+		resp.Choices[0].ReasoningContent = accumulatedThoughts.String()
+	}
+
+	return resp, nil
 }
 
 // convertSchemaRecursive recursively converts a schema map to a genai.Schema
