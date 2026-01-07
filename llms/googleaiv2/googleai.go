@@ -215,6 +215,8 @@ func convertHarmBlockThreshold(threshold HarmBlockThreshold) genai.HarmBlockThre
 }
 
 // convertThinkingConfig converts llms.ThinkingConfig to genai.ThinkingConfig.
+// Note: Gemini 3 Pro only supports "low" and "high" thinking levels.
+// See: https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thinking_level
 func convertThinkingConfig(config *llms.ThinkingConfig) *genai.ThinkingConfig {
 	if config == nil {
 		return nil
@@ -222,16 +224,16 @@ func convertThinkingConfig(config *llms.ThinkingConfig) *genai.ThinkingConfig {
 
 	genaiConfig := &genai.ThinkingConfig{}
 
-	// Only set ThinkingLevel for HIGH mode - for other modes, we just enable IncludeThoughts
-	// Setting ThinkingLevel forces extended thinking which can cause the model to only produce
-	// thinking content without actual output. By only setting IncludeThoughts, we get the
-	// thinking without forcing extended thinking behavior.
+	// Map ThinkingMode to Gemini ThinkingLevel
+	// Gemini 3 Pro only supports LOW and HIGH levels
+	// LOW: Minimizes latency and cost, best for simple tasks
+	// HIGH: Maximizes reasoning depth, may take longer but more carefully reasoned
 	switch config.Mode {
+	case llms.ThinkingModeLow, llms.ThinkingModeMedium, llms.ThinkingModeAuto:
+		// Map medium/auto to low for Gemini 3 Pro compatibility
+		genaiConfig.ThinkingLevel = genai.ThinkingLevelLow
 	case llms.ThinkingModeHigh:
 		genaiConfig.ThinkingLevel = genai.ThinkingLevelHigh
-	case llms.ThinkingModeLow, llms.ThinkingModeMedium, llms.ThinkingModeAuto:
-		// Don't set ThinkingLevel - just enable IncludeThoughts
-		// This allows the model to think naturally without forcing extended thinking
 	default:
 		return nil // ThinkingModeNone or unknown
 	}
