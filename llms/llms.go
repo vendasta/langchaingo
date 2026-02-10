@@ -40,6 +40,15 @@ type ReasoningModel interface {
 	SupportsReasoning() bool
 }
 
+// ImageGenerator is an interface for models that can generate images from text prompts.
+// Models like GPT Image 1.5 and DALL-E implement this interface.
+type ImageGenerator interface {
+	// GenerateImage generates one or more images from a text prompt.
+	// The prompt describes the desired image, and options control generation parameters
+	// like size, quality, and number of images.
+	GenerateImage(ctx context.Context, prompt string, options ...ImageOption) (*ImageResponse, error)
+}
+
 // GenerateFromSinglePrompt is a convenience function for calling an LLM with
 // a single string prompt, expecting a single string response. It's useful for
 // simple, string-only interactions and provides a slightly more ergonomic API

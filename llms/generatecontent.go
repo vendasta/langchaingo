@@ -127,6 +127,26 @@ type ContentResponse struct {
 	Choices []*ContentChoice
 }
 
+// ImageResponse contains the result of an image generation request.
+// It includes one or more generated images along with metadata.
+type ImageResponse struct {
+	// Images contains the generated images.
+	Images []GeneratedImage
+	// Created is the Unix timestamp of when the images were generated.
+	Created int64
+}
+
+// GeneratedImage represents a single generated image from an image generation request.
+type GeneratedImage struct {
+	// URL is the URL to the generated image. Note that URLs typically expire after 1 hour.
+	URL string
+	// B64JSON contains the base64-encoded JSON representation of the image, if requested.
+	B64JSON string
+	// RevisedPrompt is the prompt that was actually used for generation.
+	// The model may revise the input prompt for safety or clarity.
+	RevisedPrompt string
+}
+
 // ContentChoice is one of the response choices returned by GenerateContent
 // calls.
 type ContentChoice struct {

@@ -59,6 +59,13 @@ var modelCapabilities = []ModelCapability{
 		SupportsThinking: false,
 		SupportsCaching:  false,
 	},
+	// GPT Image models (multimodal: vision + image generation)
+	{
+		Pattern:          `(?i)^gpt-image`, // Matches gpt-image-1, gpt-image-1.5, etc.
+		SupportsSystem:   true,
+		SupportsThinking: false,
+		SupportsCaching:  false,
+	},
 	// Future models can be added here
 }
 
@@ -80,6 +87,7 @@ func getModelCapabilities(model string) ModelCapability {
 var (
 	_ llms.Model          = (*LLM)(nil)
 	_ llms.ReasoningModel = (*LLM)(nil)
+	_ llms.ImageGenerator = (*LLM)(nil)
 )
 
 // New returns a new OpenAI LLM.
@@ -505,4 +513,53 @@ func toolCallFromToolCall(tc llms.ToolCall) openaiclient.ToolCall {
 func isGPT5Model(model string) bool {
 	modelLower := strings.ToLower(model)
 	return strings.HasPrefix(modelLower, "gpt-5")
+}
+
+// GenerateImage implements the ImageGenerator interface for image generation.
+func (o *LLM) GenerateImage(ctx context.Context, prompt string, options ...llms.ImageOption) (*llms.ImageResponse, error) {
+	if prompt == "" {
+		return nil, fmt.Errorf("prompt cannot be empty")
+	}
+
+	opts := llms.ImageOptions{
+		Model:          llms.DefaultImageModel,
+		N:              llms.DefaultImageCount,
+		Size:           llms.DefaultImageSize,
+		Quality:        llms.DefaultImageQuality,
+		ResponseFormat: llms.DefaultImageResponseFormat,
+	}
+
+	for _, opt := range options {
+		opt(&opts)
+	}
+
+	req := &openaiclient.ImageGenerationRequest{
+		Prompt:         prompt,
+		Model:          opts.Model,
+		N:              opts.N,
+		Size:           opts.Size,
+		Quality:        opts.Quality,
+		Style:          opts.Style,
+		ResponseFormat: opts.ResponseFormat,
+		User:           opts.User,
+	}
+
+	resp, err := o.client.CreateImageGeneration(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate image: %w", err)
+	}
+
+	images := make([]llms.GeneratedImage, len(resp.Images))
+	for i, img := range resp.Images {
+		images[i] = llms.GeneratedImage{
+			URL:           img.URL,
+			B64JSON:       img.B64JSON,
+			RevisedPrompt: img.RevisedPrompt,
+		}
+	}
+
+	return &llms.ImageResponse{
+		Images:  images,
+		Created: resp.Created,
+	}, nil
 }

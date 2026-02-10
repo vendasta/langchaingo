@@ -291,3 +291,76 @@ func WithResponseMIMEType(responseMIMEType string) CallOption {
 		o.ResponseMIMEType = responseMIMEType
 	}
 }
+
+// ImageOptions contains options for image generation requests.
+// Not all models support all options.
+type ImageOptions struct {
+	Model          string
+	N              int
+	Size           string
+	Quality        string
+	Style          string
+	ResponseFormat string
+	User           string
+}
+
+// ImageOption is a function that configures ImageOptions.
+type ImageOption func(*ImageOptions)
+
+// Default values for image generation.
+const (
+	DefaultImageModel          = "gpt-image-1.5"
+	DefaultImageCount          = 1
+	DefaultImageSize           = "1024x1024"
+	DefaultImageQuality        = "medium"
+	DefaultImageResponseFormat = "url"
+)
+
+// WithImageModel specifies which model to use for image generation.
+func WithImageModel(model string) ImageOption {
+	return func(o *ImageOptions) {
+		o.Model = model
+	}
+}
+
+// WithImageCount specifies the number of images to generate (1-10).
+func WithImageCount(n int) ImageOption {
+	return func(o *ImageOptions) {
+		o.N = n
+	}
+}
+
+// WithImageSize specifies the dimensions of the generated image.
+func WithImageSize(size string) ImageOption {
+	return func(o *ImageOptions) {
+		o.Size = size
+	}
+}
+
+// WithImageQuality specifies the quality level.
+func WithImageQuality(quality string) ImageOption {
+	return func(o *ImageOptions) {
+		o.Quality = quality
+	}
+}
+
+// WithImageStyle specifies the style (model-specific).
+func WithImageStyle(style string) ImageOption {
+	return func(o *ImageOptions) {
+		o.Style = style
+	}
+}
+
+// WithImageResponseFormat specifies the response format.
+func WithImageResponseFormat(format string) ImageOption {
+	return func(o *ImageOptions) {
+		o.ResponseFormat = format
+	}
+}
+
+// WithImageUser specifies a unique user identifier for abuse monitoring.
+func WithImageUser(user string) ImageOption {
+	return func(o *ImageOptions) {
+		o.User = user
+	}
+}
