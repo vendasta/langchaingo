@@ -116,7 +116,14 @@ func (c *Client) createImageGeneration(ctx context.Context, payload *imageGenera
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, parseErrorResponse(resp)
+		msg := fmt.Sprintf("API returned unexpected status code: %d", resp.StatusCode)
+
+		var errResp errorMessage
+		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil {
+			return nil, fmt.Errorf("%s", msg)
+		}
+
+		return nil, fmt.Errorf("%s: %s", msg, errResp.Error.Message)
 	}
 
 	var imageResp imageGenerationResponse
