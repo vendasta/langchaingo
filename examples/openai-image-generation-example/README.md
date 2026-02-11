@@ -10,8 +10,7 @@ LangChain Go supports image generation with GPT Image 1.5 - the latest image gen
 
 1. Simple image generation with default parameters
 2. Custom quality and size settings
-3. Generating multiple image variations
-4. Base64 response format for immediate storage
+3. Generating multiple image variations with base64 output
 
 ## Prerequisites
 
@@ -50,11 +49,10 @@ resp, err := llm.GenerateImage(ctx,
 ## Available Options
 
 - `llms.WithImageModel(model)` - Specify model (default: "gpt-image-1.5")
-- `llms.WithImageCount(n)` - Number of images (1-10)
+- `llms.WithImageCount(n)` - Number of images (1-10, clamped automatically)
 - `llms.WithImageSize(size)` - Dimensions: "1024x1024", "1024x1536", "1536x1024"
 - `llms.WithImageQuality(quality)` - Quality: "low", "medium", "high"
 - `llms.WithImageStyle(style)` - Style: "vivid", "natural" (model-specific)
-- `llms.WithImageResponseFormat(format)` - Format: "url", "b64_json"
 - `llms.WithImageUser(user)` - User identifier for monitoring
 
 ## Default Values
@@ -64,7 +62,10 @@ When not specified:
 - Count: `1`
 - Size: `1024x1024`
 - Quality: `medium`
-- Format: `url`
+
+## Response Format
+
+GPT Image 1.5 returns images as **base64-encoded data** in the `B64JSON` field by default. URLs are not supported for this model.
 
 ## Pricing
 
@@ -77,10 +78,10 @@ According to OpenAI's pricing:
 
 ## Important Notes
 
-- Generated image URLs expire after 1 hour
-- Use `b64_json` format if you need to store images immediately
+- GPT Image 1.5 returns images as base64-encoded data
 - The model may revise your prompt for safety or clarity (check `RevisedPrompt` field)
 - For production use, consider implementing retry logic and error handling
+- Image count is automatically clamped to valid range [1, 10]
 
 ## Learn More
 

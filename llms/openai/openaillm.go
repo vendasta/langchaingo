@@ -533,14 +533,13 @@ func (o *LLM) GenerateImage(ctx context.Context, prompt string, options ...llms.
 	}
 
 	req := &openaiclient.ImageGenerationRequest{
-		Prompt:         prompt,
-		Model:          opts.Model,
-		N:              opts.N,
-		Size:           opts.Size,
-		Quality:        opts.Quality,
-		Style:          opts.Style,
-		ResponseFormat: opts.ResponseFormat,
-		User:           opts.User,
+		Prompt:  prompt,
+		Model:   opts.Model,
+		N:       opts.N,
+		Size:    opts.Size,
+		Quality: opts.Quality,
+		Style:   opts.Style,
+		User:    opts.User,
 	}
 
 	resp, err := o.client.CreateImageGeneration(ctx, req)

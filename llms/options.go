@@ -295,13 +295,12 @@ func WithResponseMIMEType(responseMIMEType string) CallOption {
 // ImageOptions contains options for image generation requests.
 // Not all models support all options.
 type ImageOptions struct {
-	Model          string
-	N              int
-	Size           string
-	Quality        string
-	Style          string
-	ResponseFormat string
-	User           string
+	Model   string
+	N       int
+	Size    string
+	Quality string
+	Style   string
+	User    string
 }
 
 // ImageOption is a function that configures ImageOptions.
@@ -309,11 +308,10 @@ type ImageOption func(*ImageOptions)
 
 // Default values for image generation.
 const (
-	DefaultImageModel          = "gpt-image-1.5"
-	DefaultImageCount          = 1
-	DefaultImageSize           = "1024x1024"
-	DefaultImageQuality        = "medium"
-	DefaultImageResponseFormat = "url"
+	DefaultImageModel   = "gpt-image-1.5"
+	DefaultImageCount   = 1
+	DefaultImageSize    = "1024x1024"
+	DefaultImageQuality = "medium"
 )
 
 // WithImageModel specifies which model to use for image generation.
@@ -356,13 +354,6 @@ func WithImageQuality(quality string) ImageOption {
 func WithImageStyle(style string) ImageOption {
 	return func(o *ImageOptions) {
 		o.Style = style
-	}
-}
-
-// WithImageResponseFormat specifies the response format.
-func WithImageResponseFormat(format string) ImageOption {
-	return func(o *ImageOptions) {
-		o.ResponseFormat = format
 	}
 }
 

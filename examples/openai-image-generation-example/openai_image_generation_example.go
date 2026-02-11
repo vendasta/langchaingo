@@ -58,19 +58,9 @@ func main() {
 		log.Fatal(err)
 	}
 	for i, img := range resp3.Images {
-		fmt.Printf("Image %d URL: %s\n", i+1, img.URL)
+		fmt.Printf("Image %d: Base64 length=%d bytes\n", i+1, len(img.B64JSON))
+		if img.URL != "" {
+			fmt.Printf("  (URL also present: %s)\n", img.URL)
+		}
 	}
-	fmt.Println()
-
-	// Example 4: Base64 response format
-	fmt.Println("Example 4: Base64 format")
-	resp4, err := llm.GenerateImage(ctx,
-		"A cute cartoon robot",
-		llms.WithImageResponseFormat("b64_json"),
-		llms.WithImageQuality("low"), // Faster, cheaper
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Base64 data length: %d bytes\n", len(resp4.Images[0].B64JSON))
 }

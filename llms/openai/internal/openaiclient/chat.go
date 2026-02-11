@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -245,6 +246,8 @@ func (m ChatMessage) MarshalJSON() ([]byte, error) {
 		m.MultiContent = nil
 	}
 	if len(m.MultiContent) > 0 {
+		transformedContent := transformContentForOpenAI(m.MultiContent)
+
 		msg := struct {
 			Role         string             `json:"role"`
 			Content      string             `json:"-"`
@@ -261,7 +264,15 @@ func (m ChatMessage) MarshalJSON() ([]byte, error) {
 
 			// This field is only used with the deepseek-reasoner model and represents the reasoning contents of the assistant message before the final answer.
 			ReasoningContent string `json:"reasoning_content,omitempty"`
-		}(m)
+		}{
+			Role:             m.Role,
+			MultiContent:     transformedContent,
+			Name:             m.Name,
+			ToolCalls:        m.ToolCalls,
+			FunctionCall:     m.FunctionCall,
+			ToolCallID:       m.ToolCallID,
+			ReasoningContent: m.ReasoningContent,
+		}
 		return json.Marshal(msg)
 	}
 	msg := struct {
@@ -281,6 +292,23 @@ func (m ChatMessage) MarshalJSON() ([]byte, error) {
 		ReasoningContent string `json:"reasoning_content,omitempty"`
 	}(m)
 	return json.Marshal(msg)
+}
+
+// transformContentForOpenAI converts BinaryContent to ImageURLContent with data URIs
+// because OpenAI doesn't support the generic "binary" type.
+func transformContentForOpenAI(parts []llms.ContentPart) []llms.ContentPart {
+	transformed := make([]llms.ContentPart, 0, len(parts))
+	for _, part := range parts {
+		if bc, ok := part.(llms.BinaryContent); ok {
+			dataURI := fmt.Sprintf("data:%s;base64,%s", bc.MIMEType, base64.StdEncoding.EncodeToString(bc.Data))
+			transformed = append(transformed, llms.ImageURLContent{
+				URL: dataURI,
+			})
+		} else {
+			transformed = append(transformed, part)
+		}
+	}
+	return transformed
 }
 
 func isSingleTextContent(parts []llms.ContentPart) (string, bool) {

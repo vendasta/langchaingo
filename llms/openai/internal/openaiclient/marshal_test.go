@@ -3,6 +3,8 @@ package openaiclient
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/vendasta/langchaingo/llms"
 )
 
 func TestChatRequest_MarshalJSON(t *testing.T) {
@@ -209,5 +211,93 @@ func TestIsReasoningModel(t *testing.T) {
 				t.Errorf("isReasoningModel(%q) = %v, want %v", tt.model, result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestChatMessage_BinaryContentTransformation(t *testing.T) {
+	t.Parallel()
+
+	testImageData := []byte{
+		0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+		0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+		0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+		0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
+		0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41,
+		0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,
+		0x00, 0x03, 0x01, 0x01, 0x00, 0x18, 0xDD, 0x8D,
+		0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E,
+		0x44, 0xAE, 0x42, 0x60, 0x82,
+	}
+
+	msg := ChatMessage{
+		Role: "user",
+		MultiContent: []llms.ContentPart{
+			llms.BinaryPart("image/png", testImageData),
+			llms.TextPart("What color is this?"),
+		},
+	}
+
+	jsonData, err := json.Marshal(msg)
+	if err != nil {
+		t.Fatalf("Failed to marshal ChatMessage: %v", err)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Fatalf("Failed to unmarshal result: %v", err)
+	}
+
+	if result["role"] != "user" {
+		t.Errorf("Expected role 'user', got %v", result["role"])
+	}
+
+	content, ok := result["content"].([]interface{})
+	if !ok {
+		t.Fatalf("Expected content to be an array, got %T", result["content"])
+	}
+
+	if len(content) != 2 {
+		t.Fatalf("Expected 2 content parts, got %d", len(content))
+	}
+
+	firstPart, ok := content[0].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected first part to be an object, got %T", content[0])
+	}
+
+	if firstPart["type"] != "image_url" {
+		t.Errorf("Expected first part type to be 'image_url', got %v", firstPart["type"])
+	}
+
+	imageURL, ok := firstPart["image_url"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected image_url to be an object, got %T", firstPart["image_url"])
+	}
+
+	url, ok := imageURL["url"].(string)
+	if !ok {
+		t.Fatalf("Expected url to be a string, got %T", imageURL["url"])
+	}
+
+	expectedPrefix := "data:image/png;base64,"
+	if len(url) < len(expectedPrefix) || url[:len(expectedPrefix)] != expectedPrefix {
+		maxLen := 30
+		if len(url) < maxLen {
+			maxLen = len(url)
+		}
+		t.Errorf("Expected data URI starting with '%s', got %s", expectedPrefix, url[:maxLen])
+	}
+
+	secondPart, ok := content[1].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected second part to be an object, got %T", content[1])
+	}
+
+	if secondPart["type"] != "text" {
+		t.Errorf("Expected second part type to be 'text', got %v", secondPart["type"])
+	}
+
+	if secondPart["text"] != "What color is this?" {
+		t.Errorf("Expected text 'What color is this?', got %v", secondPart["text"])
 	}
 }

@@ -39,14 +39,13 @@ func TestCreateImageGeneration(t *testing.T) {
 		{
 			name: "successful generation with custom parameters",
 			request: &ImageGenerationRequest{
-				Prompt:         "A custom image",
-				Model:          "gpt-image-1.5",
-				N:              2,
-				Size:           "1024x1536",
-				Quality:        "high",
-				Style:          "vivid",
-				ResponseFormat: "b64_json",
-				User:           "test-user",
+				Prompt:  "A custom image",
+				Model:   "gpt-image-1.5",
+				N:       2,
+				Size:    "1024x1536",
+				Quality: "high",
+				Style:   "vivid",
+				User:    "test-user",
 			},
 			serverResponse: imageGenerationResponse{
 				Created: 1234567890,
@@ -128,9 +127,6 @@ func TestCreateImageGeneration(t *testing.T) {
 					}
 					if payload.Quality == "" || payload.Quality != "medium" {
 						t.Errorf("Expected default quality medium, got %q", payload.Quality)
-					}
-					if payload.ResponseFormat == "" || payload.ResponseFormat != "url" {
-						t.Errorf("Expected default response format url, got %q", payload.ResponseFormat)
 					}
 				}
 

@@ -14,14 +14,13 @@ const (
 
 // imageGenerationPayload is the request payload for image generation.
 type imageGenerationPayload struct {
-	Prompt         string `json:"prompt"`
-	Model          string `json:"model,omitempty"`
-	N              int    `json:"n,omitempty"`
-	Size           string `json:"size,omitempty"`
-	Quality        string `json:"quality,omitempty"`
-	Style          string `json:"style,omitempty"`
-	ResponseFormat string `json:"response_format,omitempty"`
-	User           string `json:"user,omitempty"`
+	Prompt  string `json:"prompt"`
+	Model   string `json:"model,omitempty"`
+	N       int    `json:"n,omitempty"`
+	Size    string `json:"size,omitempty"`
+	Quality string `json:"quality,omitempty"`
+	Style   string `json:"style,omitempty"`
+	User    string `json:"user,omitempty"`
 }
 
 // imageGenerationResponse is the API response structure.
@@ -39,14 +38,13 @@ type generatedImageData struct {
 
 // ImageGenerationRequest is the public request structure.
 type ImageGenerationRequest struct {
-	Prompt         string
-	Model          string
-	N              int
-	Size           string
-	Quality        string
-	Style          string
-	ResponseFormat string
-	User           string
+	Prompt  string
+	Model   string
+	N       int
+	Size    string
+	Quality string
+	Style   string
+	User    string
 }
 
 // ImageGenerationResponse is the public response structure.
@@ -65,14 +63,13 @@ type GeneratedImage struct {
 // CreateImageGeneration calls the /v1/images/generations endpoint.
 func (c *Client) CreateImageGeneration(ctx context.Context, r *ImageGenerationRequest) (*ImageGenerationResponse, error) {
 	payload := &imageGenerationPayload{
-		Prompt:         r.Prompt,
-		Model:          r.Model,
-		N:              r.N,
-		Size:           r.Size,
-		Quality:        r.Quality,
-		Style:          r.Style,
-		ResponseFormat: r.ResponseFormat,
-		User:           r.User,
+		Prompt:  r.Prompt,
+		Model:   r.Model,
+		N:       r.N,
+		Size:    r.Size,
+		Quality: r.Quality,
+		Style:   r.Style,
+		User:    r.User,
 	}
 
 	if payload.Model == "" {
@@ -86,9 +83,6 @@ func (c *Client) CreateImageGeneration(ctx context.Context, r *ImageGenerationRe
 	}
 	if payload.Quality == "" {
 		payload.Quality = "medium"
-	}
-	if payload.ResponseFormat == "" {
-		payload.ResponseFormat = "url"
 	}
 
 	return c.createImageGeneration(ctx, payload)
