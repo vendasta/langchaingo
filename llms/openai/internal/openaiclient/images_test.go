@@ -40,7 +40,7 @@ func TestCreateImageGeneration(t *testing.T) {
 			name: "successful generation with custom parameters",
 			request: &ImageGenerationRequest{
 				Prompt:         "A custom image",
-				Model:          "dall-e-3",
+				Model:          "gpt-image-1.5",
 				N:              2,
 				Size:           "1024x1536",
 				Quality:        "high",

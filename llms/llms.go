@@ -41,7 +41,7 @@ type ReasoningModel interface {
 }
 
 // ImageGenerator is an interface for models that can generate images from text prompts.
-// Models like GPT Image 1.5 and DALL-E implement this interface.
+// GPT Image 1.5 implements this interface.
 type ImageGenerator interface {
 	// GenerateImage generates one or more images from a text prompt.
 	// The prompt describes the desired image, and options control generation parameters

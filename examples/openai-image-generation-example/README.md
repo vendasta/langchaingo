@@ -1,13 +1,10 @@
 # OpenAI Image Generation Example
 
-This example demonstrates how to use OpenAI's GPT Image 1.5 and DALL-E models for image generation through LangChain Go.
+This example demonstrates how to use OpenAI's GPT Image 1.5 model for image generation through LangChain Go.
 
 ## Overview
 
-LangChain Go supports image generation with:
-- **GPT Image 1.5** - Latest image generation model with better instruction following
-- **DALL-E 3** - High-quality image generation with advanced features
-- **DALL-E 2** - Faster, cost-effective image generation
+LangChain Go supports image generation with GPT Image 1.5 - the latest image generation model with advanced instruction following and high-quality output.
 
 ## Features Demonstrated
 
@@ -52,11 +49,11 @@ resp, err := llm.GenerateImage(ctx,
 
 ## Available Options
 
-- `llms.WithImageModel(model)` - Specify model: "gpt-image-1.5", "dall-e-3", "dall-e-2"
+- `llms.WithImageModel(model)` - Specify model (default: "gpt-image-1.5")
 - `llms.WithImageCount(n)` - Number of images (1-10)
 - `llms.WithImageSize(size)` - Dimensions: "1024x1024", "1024x1536", "1536x1024"
 - `llms.WithImageQuality(quality)` - Quality: "low", "medium", "high"
-- `llms.WithImageStyle(style)` - Style (DALL-E 3): "vivid", "natural"
+- `llms.WithImageStyle(style)` - Style: "vivid", "natural" (model-specific)
 - `llms.WithImageResponseFormat(format)` - Format: "url", "b64_json"
 - `llms.WithImageUser(user)` - User identifier for monitoring
 

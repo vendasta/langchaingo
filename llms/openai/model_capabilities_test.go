@@ -90,7 +90,7 @@ func TestGPTImageModelPattern(t *testing.T) {
 	nonGPTImageModels := []string{
 		"gpt-4",
 		"gpt-3.5-turbo",
-		"dall-e-3",
+		"gpt-4o",
 	}
 
 	for _, model := range nonGPTImageModels {
