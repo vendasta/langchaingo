@@ -199,56 +199,6 @@ func TestCreateImageGeneration(t *testing.T) {
 	}
 }
 
-func TestImageGenerationDefaults(t *testing.T) {
-	t.Parallel()
-
-	// Test that defaults are properly applied
-	req := &ImageGenerationRequest{
-		Prompt: "Test",
-	}
-
-	payload := &imageGenerationPayload{
-		Prompt: req.Prompt,
-		Model:  req.Model,
-		N:      req.N,
-		Size:   req.Size,
-	}
-
-	// Apply defaults (mimicking CreateImageGeneration logic)
-	if payload.Model == "" {
-		payload.Model = defaultImageModel
-	}
-	if payload.N == 0 {
-		payload.N = 1
-	}
-	if payload.Size == "" {
-		payload.Size = "1024x1024"
-	}
-	if payload.Quality == "" {
-		payload.Quality = "medium"
-	}
-	if payload.ResponseFormat == "" {
-		payload.ResponseFormat = "url"
-	}
-
-	// Verify defaults
-	if payload.Model != "gpt-image-1.5" {
-		t.Errorf("Expected default model gpt-image-1.5, got %s", payload.Model)
-	}
-	if payload.N != 1 {
-		t.Errorf("Expected default N=1, got %d", payload.N)
-	}
-	if payload.Size != "1024x1024" {
-		t.Errorf("Expected default size 1024x1024, got %s", payload.Size)
-	}
-	if payload.Quality != "medium" {
-		t.Errorf("Expected default quality medium, got %s", payload.Quality)
-	}
-	if payload.ResponseFormat != "url" {
-		t.Errorf("Expected default response format url, got %s", payload.ResponseFormat)
-	}
-}
-
 func TestCreateImageGenerationEmptyResponse(t *testing.T) {
 	t.Parallel()
 

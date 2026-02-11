@@ -2,7 +2,10 @@ package openai
 
 import (
 	"context"
+	"strings"
 	"testing"
+
+	"github.com/vendasta/langchaingo/llms"
 )
 
 func TestModelCapabilities(t *testing.T) {
@@ -66,7 +69,6 @@ func TestModelCapabilities(t *testing.T) {
 func TestGPTImageModelPattern(t *testing.T) {
 	t.Parallel()
 
-	// Test that the gpt-image pattern matches correctly
 	gptImageModels := []string{
 		"gpt-image-1",
 		"gpt-image-1.5",
@@ -86,7 +88,6 @@ func TestGPTImageModelPattern(t *testing.T) {
 		})
 	}
 
-	// Test that non-gpt-image models don't match
 	nonGPTImageModels := []string{
 		"gpt-4",
 		"gpt-3.5-turbo",
@@ -96,9 +97,7 @@ func TestGPTImageModelPattern(t *testing.T) {
 	for _, model := range nonGPTImageModels {
 		t.Run("not_"+model, func(t *testing.T) {
 			caps := getModelCapabilities(model)
-			// These should match other patterns, not gpt-image
-			// Just verify they get some capability (not testing specific values here)
-			_ = caps.SupportsSystem // Just access to ensure no panic
+			_ = caps.SupportsSystem
 		})
 	}
 }
@@ -106,15 +105,43 @@ func TestGPTImageModelPattern(t *testing.T) {
 func TestGenerateImageEmptyPrompt(t *testing.T) {
 	t.Parallel()
 
-	llm, err := New()
-	if err != nil {
-		// Skip test if API key is not available
-		t.Skip("OpenAI API key not available")
+	llm := &LLM{
+		model: "gpt-image-1.5",
 	}
 
 	ctx := context.Background()
-	_, err = llm.GenerateImage(ctx, "")
+	_, err := llm.GenerateImage(ctx, "")
+
 	if err == nil {
-		t.Error("Expected error for empty prompt, got nil")
+		t.Fatal("Expected error for empty prompt, got nil")
+	}
+
+	expectedMsg := "prompt cannot be empty"
+	if !strings.Contains(err.Error(), expectedMsg) {
+		t.Errorf("Expected error containing %q, got %q", expectedMsg, err.Error())
+	}
+}
+
+func TestGenerateContentWithImageModel(t *testing.T) {
+	t.Parallel()
+
+	llm := &LLM{
+		model: "gpt-image-1.5",
+	}
+
+	ctx := context.Background()
+	messages := []llms.MessageContent{
+		llms.TextParts(llms.ChatMessageTypeHuman, "Hello"),
+	}
+
+	_, err := llm.GenerateContent(ctx, messages)
+
+	if err == nil {
+		t.Fatal("Expected error when using image model for text generation, got nil")
+	}
+
+	expectedMsg := "is for image generation only"
+	if !strings.Contains(err.Error(), expectedMsg) {
+		t.Errorf("Expected error containing %q, got %q", expectedMsg, err.Error())
 	}
 }

@@ -125,6 +125,12 @@ func (o *LLM) GenerateContent(ctx context.Context, messages []llms.MessageConten
 		effectiveModel = o.model
 	}
 
+	// Guard against using image-only models for text generation
+	modelLower := strings.ToLower(effectiveModel)
+	if strings.HasPrefix(modelLower, "gpt-image") {
+		return nil, fmt.Errorf("model %q is for image generation only; use GenerateImage() instead of GenerateContent()", effectiveModel)
+	}
+
 	// Get capabilities for this model
 	modelCaps := getModelCapabilities(effectiveModel)
 
@@ -521,14 +527,7 @@ func (o *LLM) GenerateImage(ctx context.Context, prompt string, options ...llms.
 		return nil, fmt.Errorf("prompt cannot be empty")
 	}
 
-	opts := llms.ImageOptions{
-		Model:          llms.DefaultImageModel,
-		N:              llms.DefaultImageCount,
-		Size:           llms.DefaultImageSize,
-		Quality:        llms.DefaultImageQuality,
-		ResponseFormat: llms.DefaultImageResponseFormat,
-	}
-
+	var opts llms.ImageOptions
 	for _, opt := range options {
 		opt(&opts)
 	}

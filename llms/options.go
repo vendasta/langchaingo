@@ -323,9 +323,17 @@ func WithImageModel(model string) ImageOption {
 	}
 }
 
-// WithImageCount specifies the number of images to generate (1-10).
+// WithImageCount specifies the number of images to generate.
+// Values are automatically clamped to the valid range [1, 10].
+// For example, WithImageCount(0) will be set to 1, and WithImageCount(50) will be set to 10.
 func WithImageCount(n int) ImageOption {
 	return func(o *ImageOptions) {
+		if n < 1 {
+			n = 1
+		}
+		if n > 10 {
+			n = 10
+		}
 		o.N = n
 	}
 }
