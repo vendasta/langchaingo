@@ -185,6 +185,9 @@ func TestIsReasoningModel(t *testing.T) {
 		{"gpt-5-mini", true},
 		{"gpt-5-turbo", true},
 
+		// GPT-6 models accept temperature (with reasoning_effort "none"), so it is sent as set
+		{"gpt-6-luna", false},
+
 		// o1 models - should be reasoning models
 		{"o1-preview", true},
 		{"o1-mini", true},

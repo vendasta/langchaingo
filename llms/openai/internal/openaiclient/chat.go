@@ -64,8 +64,8 @@ type ChatRequest struct {
 	// Options for streaming response. Only set this when you set stream: true.
 	StreamOptions *StreamOptions `json:"stream_options,omitempty"`
 
-	// ReasoningEffort controls thinking effort for reasoning models (o1, o3, GPT-5).
-	// Valid values: "minimal" (GPT-5 only), "low", "medium", "high"
+	// ReasoningEffort controls thinking effort for reasoning models (GPT-5, GPT-6).
+	// Valid values: "none" (GPT-5.1+, GPT-6), "minimal" (gpt-5, gpt-5-mini, gpt-5-nano), "low", "medium", "high"
 	ReasoningEffort string `json:"reasoning_effort,omitempty"`
 
 	// StreamingFunc is a function to be called for each chunk of a streaming response.
