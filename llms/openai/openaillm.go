@@ -210,22 +210,24 @@ func (o *LLM) GenerateContent(ctx context.Context, messages []llms.MessageConten
 		}
 	}
 
-	// Extract reasoning effort for GPT-5 models only
+	// Extract reasoning effort for GPT-5 and GPT-6 models only
 	// Note: OpenAI o1/o3 models have built-in reasoning and don't support reasoning_effort parameter
-	// GPT-5 models support the reasoning_effort parameter to control thinking intensity
+	// GPT-5 and GPT-6 models support the reasoning_effort parameter to control thinking intensity
 	var reasoningEffort string
-	if isGPT5Model(effectiveModel) {
+	if supportsReasoningEffort(effectiveModel) {
 		if opts.Metadata != nil {
 			if config, ok := opts.Metadata["thinking_config"].(*llms.ThinkingConfig); ok {
 				// Map thinking mode to reasoning effort
 				switch config.Mode {
+				case llms.ThinkingModeNone:
+					reasoningEffort = noneReasoningEffort(effectiveModel)
 				case llms.ThinkingModeLow:
 					reasoningEffort = "low"
 				case llms.ThinkingModeMedium:
 					reasoningEffort = "medium"
 				case llms.ThinkingModeHigh:
 					reasoningEffort = "high"
-					// ThinkingModeNone and ThinkingModeAuto don't set the parameter
+					// ThinkingModeAuto doesn't set the parameter
 				}
 
 				// Handle streaming for thinking
@@ -416,12 +418,8 @@ func (o *LLM) SupportsReasoning() bool {
 		return true
 	}
 
-	// GPT-5 series (expected to have reasoning capabilities)
-	if strings.HasPrefix(modelLower, "gpt-5") {
-		return true
-	}
-
-	return false
+	// GPT-5 and GPT-6 series
+	return supportsReasoningEffort(model)
 }
 
 // CreateEmbedding creates embeddings for the given input texts.
@@ -501,8 +499,19 @@ func toolCallFromToolCall(tc llms.ToolCall) openaiclient.ToolCall {
 	}
 }
 
-// isGPT5Model checks if a model is a GPT-5 model that supports reasoning_effort parameter.
-func isGPT5Model(model string) bool {
+// supportsReasoningEffort checks if a model is a GPT-5 or GPT-6 model that supports reasoning_effort parameter.
+func supportsReasoningEffort(model string) bool {
 	modelLower := strings.ToLower(model)
-	return strings.HasPrefix(modelLower, "gpt-5")
+	return strings.HasPrefix(modelLower, "gpt-5") || strings.HasPrefix(modelLower, "gpt-6")
+}
+
+// noneReasoningEffort returns the lowest reasoning_effort a model accepts.
+// The original GPT-5 family (gpt-5, gpt-5-mini, gpt-5-nano) rejects "none" and
+// accepts "minimal"; GPT-5.1 and later, and GPT-6, accept "none" and reject "minimal".
+func noneReasoningEffort(model string) string {
+	modelLower := strings.ToLower(model)
+	if strings.HasPrefix(modelLower, "gpt-5") && !strings.HasPrefix(modelLower, "gpt-5.") {
+		return "minimal"
+	}
+	return "none"
 }

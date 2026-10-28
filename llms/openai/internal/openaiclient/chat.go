@@ -64,8 +64,8 @@ type ChatRequest struct {
 	// Options for streaming response. Only set this when you set stream: true.
 	StreamOptions *StreamOptions `json:"stream_options,omitempty"`
 
-	// ReasoningEffort controls thinking effort for reasoning models (o1, o3, GPT-5).
-	// Valid values: "minimal" (GPT-5 only), "low", "medium", "high"
+	// ReasoningEffort controls thinking effort for reasoning models (GPT-5, GPT-6).
+	// Valid values: "none" (GPT-5.1+, GPT-6), "minimal" (gpt-5, gpt-5-mini, gpt-5-nano), "low", "medium", "high"
 	ReasoningEffort string `json:"reasoning_effort,omitempty"`
 
 	// StreamingFunc is a function to be called for each chunk of a streaming response.
@@ -93,7 +93,8 @@ type ChatRequest struct {
 
 // MarshalJSON ensures that only one of MaxTokens or MaxCompletionTokens is sent.
 // OpenAI's API returns an error if both fields are present.
-// Also omits temperature for reasoning models (GPT-5, o1, o3) that only accept default temperature.
+// Also omits temperature for reasoning models (GPT-5, GPT-6, o1, o3) that only accept default temperature
+// unless reasoning_effort is "none".
 func (r ChatRequest) MarshalJSON() ([]byte, error) {
 	type Alias ChatRequest
 	aux := struct {
@@ -106,8 +107,7 @@ func (r ChatRequest) MarshalJSON() ([]byte, error) {
 	}
 
 	// Handle temperature for reasoning models
-	if isReasoningModel(r.Model) {
-		// Reasoning models (GPT-5, o1, o3) only accept temperature=1 (default)
+	if isReasoningModel(r.Model) && r.ReasoningEffort != "none" {
 		// Omit temperature field to let API use its default value
 		aux.Temperature = nil
 	} else {
@@ -133,8 +133,9 @@ func (r ChatRequest) MarshalJSON() ([]byte, error) {
 }
 
 // isReasoningModel returns true if the model is a reasoning model that has temperature constraints.
-// Reasoning models (GPT-5, o1, o3) only accept temperature=1 and reject other values.
+// Reasoning models (GPT-5, GPT-6, o1, o3) only accept temperature=1 unless reasoning_effort is "none".
 func isReasoningModel(model string) bool {
+	model = strings.ToLower(model)
 	// o1 series: o1-preview, o1-mini
 	if strings.HasPrefix(model, "o1-") {
 		return true
@@ -143,8 +144,8 @@ func isReasoningModel(model string) bool {
 	if model == "o3" || strings.HasPrefix(model, "o3-") {
 		return true
 	}
-	// GPT-5 series (when released)
-	if strings.HasPrefix(model, "gpt-5") {
+	// GPT-5 and GPT-6 series
+	if strings.HasPrefix(model, "gpt-5") || strings.HasPrefix(model, "gpt-6") {
 		return true
 	}
 	return false
