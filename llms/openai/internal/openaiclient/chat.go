@@ -108,8 +108,6 @@ func (r ChatRequest) MarshalJSON() ([]byte, error) {
 
 	// Handle temperature for reasoning models
 	if isReasoningModel(r.Model) && r.ReasoningEffort != "none" {
-		// Reasoning models (GPT-5, GPT-6, o1, o3) only accept temperature=1 (default) while reasoning;
-		// with reasoning_effort "none" they accept any temperature.
 		// Omit temperature field to let API use its default value
 		aux.Temperature = nil
 	} else {
@@ -135,7 +133,7 @@ func (r ChatRequest) MarshalJSON() ([]byte, error) {
 }
 
 // isReasoningModel returns true if the model is a reasoning model that has temperature constraints.
-// Reasoning models (GPT-5, o1, o3) only accept temperature=1 and reject other values.
+// Reasoning models (GPT-5, GPT-6, o1, o3) only accept temperature=1 unless reasoning_effort is "none".
 func isReasoningModel(model string) bool {
 	model = strings.ToLower(model)
 	// o1 series: o1-preview, o1-mini

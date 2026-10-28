@@ -419,11 +419,7 @@ func (o *LLM) SupportsReasoning() bool {
 	}
 
 	// GPT-5 and GPT-6 series
-	if strings.HasPrefix(modelLower, "gpt-5") || strings.HasPrefix(modelLower, "gpt-6") {
-		return true
-	}
-
-	return false
+	return supportsReasoningEffort(model)
 }
 
 // CreateEmbedding creates embeddings for the given input texts.
