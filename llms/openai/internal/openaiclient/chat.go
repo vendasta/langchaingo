@@ -93,7 +93,8 @@ type ChatRequest struct {
 
 // MarshalJSON ensures that only one of MaxTokens or MaxCompletionTokens is sent.
 // OpenAI's API returns an error if both fields are present.
-// Also omits temperature for reasoning models (GPT-5, o1, o3) that only accept default temperature.
+// Also omits temperature for reasoning models (GPT-5, GPT-6, o1, o3) that only accept default temperature
+// unless reasoning_effort is "none".
 func (r ChatRequest) MarshalJSON() ([]byte, error) {
 	type Alias ChatRequest
 	aux := struct {
@@ -106,8 +107,9 @@ func (r ChatRequest) MarshalJSON() ([]byte, error) {
 	}
 
 	// Handle temperature for reasoning models
-	if isReasoningModel(r.Model) {
-		// Reasoning models (GPT-5, o1, o3) only accept temperature=1 (default)
+	if isReasoningModel(r.Model) && r.ReasoningEffort != "none" {
+		// Reasoning models (GPT-5, GPT-6, o1, o3) only accept temperature=1 (default) while reasoning;
+		// with reasoning_effort "none" they accept any temperature.
 		// Omit temperature field to let API use its default value
 		aux.Temperature = nil
 	} else {
@@ -135,6 +137,7 @@ func (r ChatRequest) MarshalJSON() ([]byte, error) {
 // isReasoningModel returns true if the model is a reasoning model that has temperature constraints.
 // Reasoning models (GPT-5, o1, o3) only accept temperature=1 and reject other values.
 func isReasoningModel(model string) bool {
+	model = strings.ToLower(model)
 	// o1 series: o1-preview, o1-mini
 	if strings.HasPrefix(model, "o1-") {
 		return true
@@ -143,8 +146,8 @@ func isReasoningModel(model string) bool {
 	if model == "o3" || strings.HasPrefix(model, "o3-") {
 		return true
 	}
-	// GPT-5 series (when released)
-	if strings.HasPrefix(model, "gpt-5") {
+	// GPT-5 and GPT-6 series
+	if strings.HasPrefix(model, "gpt-5") || strings.HasPrefix(model, "gpt-6") {
 		return true
 	}
 	return false

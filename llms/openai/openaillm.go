@@ -418,8 +418,8 @@ func (o *LLM) SupportsReasoning() bool {
 		return true
 	}
 
-	// GPT-5 series (expected to have reasoning capabilities)
-	if strings.HasPrefix(modelLower, "gpt-5") {
+	// GPT-5 and GPT-6 series
+	if strings.HasPrefix(modelLower, "gpt-5") || strings.HasPrefix(modelLower, "gpt-6") {
 		return true
 	}
 

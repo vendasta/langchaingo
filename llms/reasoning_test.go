@@ -164,6 +164,7 @@ func TestIsReasoningModel(t *testing.T) {
 		// OpenAI reasoning models
 		{"gpt-5-mini", true},
 		{"gpt-5-preview", true},
+		{"gpt-6-luna", true},
 		{"o1-preview", true},
 		{"o1-mini", true},
 		{"o3-mini", true},

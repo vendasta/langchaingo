@@ -27,12 +27,15 @@ func TestReasoningEffortRequest(t *testing.T) {
 		wantTemperature *float64
 	}{
 		{"gpt-6 none sends none and temperature 0", "gpt-6-luna", llms.ThinkingModeNone, 0, "none", ptr(0.0)},
-		{"gpt-6 low keeps temperature", "gpt-6-luna", llms.ThinkingModeLow, 1, "low", ptr(1.0)},
-		{"gpt-6 auto sends no effort", "gpt-6-luna", llms.ThinkingModeAuto, 1, "", ptr(1.0)},
+		{"gpt-6 none sends caller temperature", "gpt-6-luna", llms.ThinkingModeNone, 0.7, "none", ptr(0.7)},
+		{"uppercase gpt-6 none sends none", "GPT-6-luna", llms.ThinkingModeNone, 0, "none", ptr(0.0)},
+		{"gpt-6 low omits temperature", "gpt-6-luna", llms.ThinkingModeLow, 0, "low", nil},
+		{"gpt-6 auto sends no effort or temperature", "gpt-6-luna", llms.ThinkingModeAuto, 0, "", nil},
 		{"gpt-5 low omits temperature", "gpt-5", llms.ThinkingModeLow, 0, "low", nil},
-		{"gpt-5 none sends minimal", "gpt-5", llms.ThinkingModeNone, 0, "minimal", nil},
+		{"gpt-5 none sends minimal and omits temperature", "gpt-5", llms.ThinkingModeNone, 0, "minimal", nil},
+		{"uppercase gpt-5 none omits temperature", "GPT-5", llms.ThinkingModeNone, 0, "minimal", nil},
 		{"gpt-5-mini none sends minimal", "gpt-5-mini", llms.ThinkingModeNone, 0, "minimal", nil},
-		{"gpt-5.1 none sends none", "gpt-5.1", llms.ThinkingModeNone, 0, "none", nil},
+		{"gpt-5.1 none sends none and temperature 0", "gpt-5.1", llms.ThinkingModeNone, 0, "none", ptr(0.0)},
 		{"gpt-4o sends no effort", "gpt-4o", llms.ThinkingModeLow, 0, "", ptr(0.0)},
 	}
 
